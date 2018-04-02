@@ -827,3 +827,42 @@ func TestOneDot(t *testing.T) {
 	assert.Equal(expectedData, R2.Data())
 	assert.Equal(expectedShape, R2.Shape())
 }
+
+func TestDense_Invert(t *testing.T) {
+	assert := assert.New(t)
+
+	id := NewDense(Float64, Shape{2, 2}, WithBacking([]float64{1, 0, 0, 1}))
+
+	// Simple Diagonal Matrix
+	a := NewDense(Float64, Shape{2, 2}, WithBacking([]float64{2, 0, 0, 3}))
+
+	aInv, err := a.Invert()
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	idActual, err := a.MatMul(aInv)
+
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	assert.InDeltaSlice(id.Data().([]float64), idActual.Data().([]float64), 0.00001)
+
+	// Dense invertible 2x2 matrix
+	a = NewDense(Float64, Shape{2, 2}, WithBacking([]float64{1, 1.5, 1, -1}))
+
+	aInv, err = a.Invert()
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	idActual, err = a.MatMul(aInv)
+
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	assert.InDeltaSlice(id.Data().([]float64), idActual.Data().([]float64), 0.00001)
+
+}

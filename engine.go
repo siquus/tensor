@@ -158,6 +158,11 @@ type Tracer interface {
 	Trace(a Tensor) (interface{}, error)
 }
 
+// Inverter is any engine that can perform the matrix invert
+type Inverter interface {
+	Invert(a Tensor, preallocated Tensor) error
+}
+
 // FMAer is any engine that can perform fused multiply add functions: A * X + Y. Also known as Axpy.
 type FMAer interface {
 	FMA(a, x, y Tensor) (Tensor, error)

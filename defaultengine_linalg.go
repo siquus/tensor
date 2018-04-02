@@ -8,6 +8,51 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
+// Invert returns the multiplicative invert of the matrix.
+func (e StdEng) Invert(t Tensor, prealloc Tensor) error {
+	// The Go version of LAPACK only supports float64s.
+	// Even the Intel MKL LAPACK has a lot of issues.
+	// => only implementing it for Float64s for now.
+	if t.Dtype() != Float64 {
+		return errors.Errorf(methodNYI, "Invert", "non-float64 type")
+	}
+
+	// check all are DenseTensors
+	td, pd, err := e.checkTwoFloatTensors(t, prealloc);
+	if err != nil {
+		return errors.Wrapf(err, opFail, "StdEng.Invert")
+	}
+
+	tDense, ok := td.(*Dense)
+	if !ok {
+		return errors.Errorf("StdEng only performs Invert for DenseTensors. Got %T instead", td)
+	}
+
+	pDense, ok := pd.(*Dense)
+	if !ok {
+		return errors.Errorf("StdEng only performs Invert for DenseTensors. Got %T instead", pd)
+	}
+
+	// Convert to Gonum Interface
+	tGonumMatrix, err := ToMat64(tDense, UseUnsafe())
+
+	if err != nil {
+		return err
+	}
+
+	pGonumMatrix, err := ToMat64(pDense, UseUnsafe())
+
+	if err != nil {
+		return err
+	}
+
+	pGonumMatrix.Inverse(tGonumMatrix)
+
+	prealloc = FromMat64(pGonumMatrix, UseUnsafe(), WithReuse(prealloc))
+
+	return nil
+}
+
 //  Trace returns the trace of a matrix (i.e. the sum of the diagonal elements). If the Tensor provided is not a matrix, it will return an error
 func (e StdEng) Trace(t Tensor) (retVal interface{}, err error) {
 	if t.Dims() != 2 {

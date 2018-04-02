@@ -2,6 +2,41 @@ package tensor
 
 import "github.com/pkg/errors"
 
+// Invert returns the multiplicative invert of the matrix.
+// TODO: If matrix is non-invertible (det == 0) it will return a wrong invert, but no error
+func (t *Dense) Invert() (retVal *Dense, err error) {
+	// only matrices may be inverted
+	if !t.IsMatrix() {
+		return nil, errors.Errorf("Only matrices may be inverted")
+	}
+
+	// only square matrices may be inverted
+	rows, err := t.shape.DimSize(0)
+	if nil != err {
+		return nil, err
+	}
+
+	columns, err := t.shape.DimSize(1)
+	if nil != err {
+		return nil, err
+	}
+
+	if rows != columns {
+		return nil, errors.Errorf("Only square matrices may be inverted")
+	}
+
+	// TODO: Check determinant != 0 here?
+
+	e := t.e
+	if inverter, ok := e.(Inverter); ok {
+		retVal := NewDense(t.t, t.Shape())
+		err := inverter.Invert(t, retVal)
+		return retVal, err
+	}
+
+	return nil, errors.Errorf("Engine %T does not support Invert", e)
+}
+
 // Trace returns the trace of the matrix (i.e. the sum of the diagonal elements). It only works for matrices
 func (t *Dense) Trace() (retVal interface{}, err error) {
 	e := t.e
